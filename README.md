@@ -22,29 +22,26 @@ This pattern completely eliminates serialization/deserialization overhead for Bi
   * `process_dataframe(arr: ArrayRef) -> Result<ArrayRef, String>`: Processes a numeric DataFrame using a single Arrow `StructArray`.
   * `process_mixed_dataframe(arr: ArrayRef) -> Result<ArrayRef, String>`: Processes a heterogeneous DataFrame containing mixed types (`Int64`, `Boolean`, and `Utf8`) zero-copy.
 
-## How to Build
+## How to Install
 
-To build and generate the dynamic library for your operating system:
+Install the package directly from GitHub using the Hayashi CLI:
 
 ```bash
-cargo build --release
+hay install sheep-farm/arrow_plugin_example
 ```
 
-Binaries will be generated under `target/release/`:
-* Linux: `libarrow_plugin_example.so`
-* macOS: `libarrow_plugin_example.dylib`
-* Windows: `arrow_plugin_example.dll`
+This will download the native dynamic library pre-compiled by CI/CD and verify its GitHub Artifact Attestation for cryptographic build provenance.
 
 ## How to Use in Hayashi
 
-Write a `.hay` script (e.g., `script.hay`):
+After installation, import the package in your `.hay` script:
 
 ```text
 // Load data
 let df = load("data.csv")
 
-// Import the compiled plugin library
-import("path/to/target/release/libarrow_plugin_example", as=tp)
+// Import the installed Arrow plugin
+import("arrow_plugin_example", as=tp)
 
 // 1. Zero-Copy column processing (Array FFI)
 generate df x_scaled = tp::scale_column(df["x"], 2.5)
