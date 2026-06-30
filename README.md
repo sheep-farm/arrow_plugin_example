@@ -41,7 +41,7 @@ After installation, import the package in your `.hay` script:
 let df = load("data.csv")
 
 // Import the installed Arrow plugin
-import("arrow_plugin_example", as=tp)
+import("sheep-farm/arrow_plugin_example", as=tp)
 
 // 1. Zero-Copy column processing (Array FFI)
 generate df x_scaled = tp::scale_column(df["x"], 2.5)
