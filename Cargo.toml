@@ -1,0 +1,13 @@
+[package]
+name = "arrow_plugin_example"
+version = "0.1.0"
+edition = "2021"
+description = "A zero-copy Apache Arrow FFI plugin example for Hayashi"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Depende diretamente do SDK no GitHub
+hayashi-plugin-sdk = { git = "https://github.com/sheep-farm/hayashi-plugin-sdk.git", branch = "main" }
