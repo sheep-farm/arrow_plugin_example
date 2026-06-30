@@ -55,3 +55,56 @@ pub fn sum_column(arr: ArrayRef) -> Result<f64, String> {
 pub fn sum_column_vector(values: Vec<f64>) -> f64 {
     values.iter().sum()
 }
+
+/// Demonstração de processamento zero-copy de um DataFrame completo.
+/// Recebe um DataFrame inteiro como um StructArray via Arrow FFI,
+/// lê as colunas "x" e "y", calcula a nova coluna "z" = x * y,
+/// e retorna um novo DataFrame (StructArray) contendo "x", "y" e "z".
+///
+/// Exemplo de uso no Hayashi:
+/// let df_new = tp::process_dataframe(df)
+#[hayashi_fn]
+pub fn process_dataframe(arr: ArrayRef) -> Result<ArrayRef, String> {
+    use hayashi_plugin_sdk::arrow::array::StructArray;
+    use hayashi_plugin_sdk::arrow::datatypes::{Field, Fields, DataType};
+
+    let struct_arr = arr.as_any()
+        .downcast_ref::<StructArray>()
+        .ok_or_else(|| "Esperado um StructArray correspondente ao DataFrame".to_string())?;
+        
+    let x_array = struct_arr.column_by_name("x")
+        .ok_or_else(|| "Coluna 'x' não encontrada no DataFrame".to_string())?
+        .as_any()
+        .downcast_ref::<Float64Array>()
+        .ok_or_else(|| "Coluna 'x' deve ser do tipo Float64".to_string())?;
+        
+    let y_array = struct_arr.column_by_name("y")
+        .ok_or_else(|| "Coluna 'y' não encontrada no DataFrame".to_string())?
+        .as_any()
+        .downcast_ref::<Float64Array>()
+        .ok_or_else(|| "Coluna 'y' deve ser do tipo Float64".to_string())?;
+        
+    let z_values: Vec<f64> = x_array.values().iter()
+        .zip(y_array.values().iter())
+        .map(|(&x, &y)| x * y)
+        .collect();
+        
+    let z_array = Arc::new(Float64Array::from(z_values)) as ArrayRef;
+    
+    // Constrói um novo StructArray de retorno
+    let fields = vec![
+        Field::new("x", DataType::Float64, true),
+        Field::new("y", DataType::Float64, true),
+        Field::new("z", DataType::Float64, true),
+    ];
+    let arrays = vec![
+        Arc::new(x_array.clone()) as ArrayRef,
+        Arc::new(y_array.clone()) as ArrayRef,
+        z_array,
+    ];
+    
+    let out_struct = StructArray::try_new(Fields::from(fields), arrays, None)
+        .map_err(|e| format!("Falha ao criar o StructArray de saída: {e}"))?;
+        
+    Ok(Arc::new(out_struct) as ArrayRef)
+}
