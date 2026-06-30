@@ -45,17 +45,6 @@ pub fn sum_column(arr: ArrayRef) -> Result<f64, String> {
     Ok(total)
 }
 
-/// Exemplo tradicional usando serialização padrão (JSON C String).
-/// Recebe uma lista ordinária como argumento (convertida para Vec no guest)
-/// e retorna a soma dos valores.
-///
-/// Exemplo de uso no Hayashi:
-/// let total = tp::sum_column_vector(df["x"])
-#[hayashi_fn]
-pub fn sum_column_vector(values: Vec<f64>) -> f64 {
-    values.iter().sum()
-}
-
 /// Demonstração de processamento zero-copy de um DataFrame completo.
 /// Recebe um DataFrame inteiro como um StructArray via Arrow FFI,
 /// lê as colunas "x" e "y", calcula a nova coluna "z" = x * y,

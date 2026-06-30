@@ -21,7 +21,6 @@ This pattern completely eliminates serialization/deserialization overhead for Bi
   * `sum_column(arr: ArrayRef) -> Result<f64, String>`: Reads an Arrow array directly and returns a scalar sum.
   * `process_dataframe(arr: ArrayRef) -> Result<ArrayRef, String>`: Processes a numeric DataFrame using a single Arrow `StructArray`.
   * `process_mixed_dataframe(arr: ArrayRef) -> Result<ArrayRef, String>`: Processes a heterogeneous DataFrame containing mixed types (`Int64`, `Boolean`, and `Utf8`) zero-copy.
-  * `sum_column_vector(values: Vec<f64>) -> f64`: Baseline example using traditional JSON serialization.
 
 ## How to Build
 
