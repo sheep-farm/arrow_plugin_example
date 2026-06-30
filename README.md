@@ -1,64 +1,64 @@
 # arrow_plugin_example
 
-Este é um repositório de exemplo demonstrando como criar um plugin nativo de alta performance para a linguagem **Hayashi** utilizando **Apache Arrow FFI (Zero-Copy)**.
+This is an example repository demonstrating how to create high-performance native plugins for the **Hayashi** language using **Apache Arrow FFI (Zero-Copy)**.
 
-## O que é Zero-Copy FFI?
+## What is Zero-Copy FFI?
 
-Diferente do mecanismo padrão de plugins nativos que troca argumentos usando strings JSON serializadas via C ABI, o Hayashi suporta a passagem direta de ponteiros de memória de colunas de DataFrames baseados nas especificações da FFI do **Apache Arrow**.
+Unlike the default native plugin mechanism that exchanges arguments using JSON serialized strings via the C ABI, Hayashi supports direct exchange of DataFrame columns and tables via the **Apache Arrow FFI** specification.
 
-Isso significa que:
-1. O host Hayashi passa um ponteiro de struct `FFI_ArrowArray` do Arrow contendo as referências diretas dos buffers de dados.
-2. O plugin (guest) reconstrói o array estatístico a partir desse endereço e o lê sem realizar nenhuma cópia de dados na memória.
-3. Se o plugin retornar uma nova coluna, ele também devolve ponteiros de structs FFI Arrow de forma que o host possa utilizá-los instantaneamente de forma zero-copy.
+This means that:
+1. The Hayashi host passes an Arrow `FFI_ArrowArray` struct pointer containing direct references to data buffers.
+2. The guest plugin reconstructs the array from this memory address and reads/writes it without any data copy.
+3. If the plugin returns a new array or table, it returns Arrow FFI pointers so the host can import them instantly.
 
-Esse padrão elimina completamente o overhead de serialização/deserialização para Big Data, tornando as extensões tão rápidas quanto o próprio núcleo da engine.
+This pattern completely eliminates serialization/deserialization overhead for Big Data, making plugins run as fast as the engine core itself.
 
-## Estrutura do Projeto
+## Project Structure
 
-* `Cargo.toml`: Configuração do crate como biblioteca do tipo `cdylib` dependendo do `hayashi-plugin-sdk`.
-* `src/lib.rs`: Implementação das funções expondo:
-  * `scale_column(arr: ArrayRef, factor: f64) -> Result<ArrayRef, String>`: Demonstração de recebimento e retorno usando Apache Arrow FFI de forma zero-copy.
-  * `sum_column(arr: ArrayRef) -> Result<f64, String>`: Demonstração de leitura direta em vetor mapeado do Arrow retornando um escalar.
-  * `process_dataframe(arr: ArrayRef) -> Result<ArrayRef, String>`: Processamento de um DataFrame numérico completo de forma zero-copy através de um `StructArray`.
-  * `process_mixed_dataframe(arr: ArrayRef) -> Result<ArrayRef, String>`: Demonstração de processamento zero-copy de um DataFrame contendo tipos mistos (Int64, Boolean e Utf8).
-  * `sum_column_vector(values: Vec<f64>) -> f64`: Exemplo de comparação usando a serialização tradicional baseada em JSON.
+* `Cargo.toml`: Crate configuration as a `cdylib` library depending on `hayashi-plugin-sdk`.
+* `src/lib.rs`: Implementation of FFI functions:
+  * `scale_column(arr: ArrayRef, factor: f64) -> Result<ArrayRef, String>`: Scales an array by a factor zero-copy.
+  * `sum_column(arr: ArrayRef) -> Result<f64, String>`: Reads an Arrow array directly and returns a scalar sum.
+  * `process_dataframe(arr: ArrayRef) -> Result<ArrayRef, String>`: Processes a numeric DataFrame using a single Arrow `StructArray`.
+  * `process_mixed_dataframe(arr: ArrayRef) -> Result<ArrayRef, String>`: Processes a heterogeneous DataFrame containing mixed types (`Int64`, `Boolean`, and `Utf8`) zero-copy.
+  * `sum_column_vector(values: Vec<f64>) -> f64`: Baseline example using traditional JSON serialization.
 
-## Como Compilar o Plugin
+## How to Build
 
-Para compilar e gerar a biblioteca dinâmica correspondente ao seu sistema operacional:
+To build and generate the dynamic library for your operating system:
 
 ```bash
 cargo build --release
 ```
 
-Os binários serão gerados na pasta `target/release/`:
+Binaries will be generated under `target/release/`:
 * Linux: `libarrow_plugin_example.so`
 * macOS: `libarrow_plugin_example.dylib`
 * Windows: `arrow_plugin_example.dll`
 
-## Como Usar no Hayashi
+## How to Use in Hayashi
 
-Escreva um script `.hay` (ex: `script.hay`):
+Write a `.hay` script (e.g., `script.hay`):
 
 ```text
-// Carrega os dados
-let df = load("dados.csv")
+// Load data
+let df = load("data.csv")
 
-// Importa a biblioteca compilada do plugin
-import("caminho/para/target/release/libarrow_plugin_example", as=tp)
+// Import the compiled plugin library
+import("path/to/target/release/libarrow_plugin_example", as=tp)
 
-// 1. Processamento Zero-Copy de Coluna Individual (Array FFI)
+// 1. Zero-Copy column processing (Array FFI)
 generate df x_scaled = tp::scale_column(df["x"], 2.5)
 
-// 2. Leitura Zero-Copy retornando valor escalar
+// 2. Zero-Copy column aggregation returning a scalar
 let total = tp::sum_column(df["x"])
-print("Soma total: ", total)
+print("Total sum: ", total)
 
-// 3. Processamento Zero-Copy de DataFrame Completo (StructArray FFI)
+// 3. Zero-Copy table processing (StructArray FFI)
 let df_new = tp::process_dataframe(df)
 display df_new
 
-// 4. Processamento Zero-Copy de DataFrame Heterogêneo (StructArray FFI com tipos mistos)
+// 4. Zero-Copy heterogeneous table processing (StructArray FFI with mixed types)
 let df_mixed_new = tp::process_mixed_dataframe(df)
 display df_mixed_new
 ```
