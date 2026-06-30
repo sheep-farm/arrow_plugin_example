@@ -19,7 +19,8 @@ Esse padrão elimina completamente o overhead de serialização/deserialização
 * `src/lib.rs`: Implementação das funções expondo:
   * `scale_column(arr: ArrayRef, factor: f64) -> Result<ArrayRef, String>`: Demonstração de recebimento e retorno usando Apache Arrow FFI de forma zero-copy.
   * `sum_column(arr: ArrayRef) -> Result<f64, String>`: Demonstração de leitura direta em vetor mapeado do Arrow retornando um escalar.
-  * `process_dataframe(arr: ArrayRef) -> Result<ArrayRef, String>`: Processamento de um DataFrame completo de forma zero-copy através de um `StructArray` contendo múltiplas colunas.
+  * `process_dataframe(arr: ArrayRef) -> Result<ArrayRef, String>`: Processamento de um DataFrame numérico completo de forma zero-copy através de um `StructArray`.
+  * `process_mixed_dataframe(arr: ArrayRef) -> Result<ArrayRef, String>`: Demonstração de processamento zero-copy de um DataFrame contendo tipos mistos (Int64, Boolean e Utf8).
   * `sum_column_vector(values: Vec<f64>) -> f64`: Exemplo de comparação usando a serialização tradicional baseada em JSON.
 
 ## Como Compilar o Plugin
@@ -56,4 +57,8 @@ print("Soma total: ", total)
 // 3. Processamento Zero-Copy de DataFrame Completo (StructArray FFI)
 let df_new = tp::process_dataframe(df)
 display df_new
+
+// 4. Processamento Zero-Copy de DataFrame Heterogêneo (StructArray FFI com tipos mistos)
+let df_mixed_new = tp::process_mixed_dataframe(df)
+display df_mixed_new
 ```
